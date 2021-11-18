@@ -1,7 +1,7 @@
 FROM alpine
 MAINTAINER Juan Manuel Vera - verajm@gmail.com
 
-ENV ZEROTIER_VERSION=1.6.6
+ENV ZEROTIER_VERSION=1.8.3
 
 RUN set -eux; \
     apk add --no-cache \
