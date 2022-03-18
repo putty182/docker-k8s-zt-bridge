@@ -1,42 +1,21 @@
-FROM alpine
+# vim: ft=dockerfile
 
-ENV ZEROTIER_VERSION=1.8.6
-
-RUN set -eux; \
-    apk add --no-cache \
-      libgcc \
-      libstdc++ \
-    ; \
-    apk add --no-cache --virtual build-dependencies \
-      build-base \
-      linux-headers \
-    ; \
-    apk add --update supervisor \
-        bash \
-        iptables\
-        openrc \
-        curl \
-    ;\
-    wget https://github.com/zerotier/ZeroTierOne/archive/$ZEROTIER_VERSION.zip -O /zerotier.zip; \
-    unzip /zerotier.zip -d /; \
-    cd /ZeroTierOne-$ZEROTIER_VERSION; \
-    make; \
-    DESTDIR=/tmp/build make install; \
-    mv /tmp/build/usr/sbin/* /usr/sbin/; \
-    mkdir /var/lib/zerotier-one; \
-    apk del build-dependencies; \
-    rm -rf /tmp/build; \
-    rm -rf /ZeroTierOne-$ZEROTIER_VERSION; \
-    rm -rf /zerotier.zip; \
-    zerotier-one -v; \
-    rc-update add iptables ;\
-    echo "tun" >> /etc/modules
-
+FROM debian:bullseye
+RUN apt-get update -qq && \
+  apt-get install -y \
+    curl \
+    gpg \
+    iptables \
+    procps \
+    supervisor && \
+  curl -fsSL "https://raw.githubusercontent.com/zerotier/ZeroTierOne/master/doc/contact%40zerotier.com.gpg" | gpg --dearmor -o /etc/apt/trusted.gpg.d/zerotier.gpg && \
+  echo "deb https://download.zerotier.com/debian/bullseye/ bullseye main" > /etc/apt/sources.list.d/zerotier.list && \
+  apt-get update -qq && \
+  apt-get install -y \
+    zerotier-one
 
 COPY files/supervisor-zerotier.conf /etc/supervisor/supervisord.conf
 COPY files/entrypoint.sh /entrypoint.sh
-
 RUN chmod 755 /entrypoint.sh
-
-VOLUME ["/var/lib/zerotier-one"]
+CMD []
 ENTRYPOINT ["/entrypoint.sh"]
